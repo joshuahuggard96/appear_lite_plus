@@ -13,7 +13,7 @@ appear_lite_plus/
 │   ├── data/       # SQLite database
 │   └── README.md   # Server documentation
 │
-└── mobile/         # React Native mobile app (iOS/Android)
+└── mobile/         # Flutter mobile app (iOS/Android)
     └── README.md   # Mobile app documentation
 ```
 

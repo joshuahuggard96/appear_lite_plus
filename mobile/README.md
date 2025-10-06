@@ -1,6 +1,6 @@
 # Appear Lite Plus - Mobile App
 
-React Native mobile application for iOS and Android to receive real-time alarm notifications from the Appear Lite Plus server.
+Flutter mobile application for iOS and Android to receive real-time alarm notifications from the Appear Lite Plus server.
 
 ## Features
 
@@ -8,56 +8,57 @@ React Native mobile application for iOS and Android to receive real-time alarm n
 - **Alarm History** - View and filter all received alarms
 - **Dashboard** - See statistics and recent activity
 - **Multi-source Support** - Display alarms from Serial, TAP, and Serial/IP sources
-- **Cross-platform** - Works on both iOS and Android
+- **Cross-platform** - Single codebase for both iOS and Android
 
 ## Prerequisites
 
-- Node.js 16+ and npm
-- Expo CLI (`npm install -g expo-cli`)
-- iOS Simulator (Mac only) or Android Studio (for Android development)
-- Expo Go app on your phone (for testing on physical device)
+- Flutter SDK 3.0.0 or higher
+- Dart SDK 3.0.0 or higher
+- Android Studio (for Android development)
+- Xcode (for iOS development, Mac only)
 
 ## Installation
 
-1. Navigate to the mobile directory:
+1. **Install Flutter**
+
+   Follow the official Flutter installation guide:
+   - [Flutter installation](https://docs.flutter.dev/get-started/install)
+
+2. **Navigate to the mobile directory:**
    ```bash
    cd mobile
    ```
 
-2. Install dependencies:
+3. **Install dependencies:**
    ```bash
-   npm install
+   flutter pub get
    ```
 
 ## Running the App
 
-### Development Server
-
-Start the Expo development server:
-
+### Check Flutter setup
 ```bash
-npm start
+flutter doctor
 ```
 
-This will open the Expo DevTools in your browser.
-
-### iOS Simulator (Mac only)
-
+### Run on Android
 ```bash
-npm run ios
+flutter run
 ```
 
-### Android Emulator
-
+### Run on iOS (Mac only)
 ```bash
-npm run android
+flutter run
 ```
 
-### Physical Device
+### Run on specific device
+```bash
+# List available devices
+flutter devices
 
-1. Install **Expo Go** from the App Store (iOS) or Play Store (Android)
-2. Run `npm start`
-3. Scan the QR code with your phone's camera (iOS) or Expo Go app (Android)
+# Run on specific device
+flutter run -d <device-id>
+```
 
 ## First Time Setup
 
@@ -77,21 +78,32 @@ You can change the server URL at any time from the Settings screen.
 
 ```
 mobile/
-├── src/
-│   ├── screens/          # App screens
-│   │   ├── SetupScreen.js      # Initial server setup
-│   │   ├── HomeScreen.js       # Dashboard with stats
-│   │   ├── AlarmsScreen.js     # Alarm history list
-│   │   └── SettingsScreen.js   # App settings
-│   ├── services/         # API and socket services
-│   │   ├── apiService.js       # REST API calls
-│   │   └── socketService.js    # SocketIO connection
-│   └── components/       # Reusable components (future use)
-├── assets/               # Images and icons
-├── App.js                # Main app entry point
-├── app.json              # Expo configuration
-└── package.json          # Dependencies
+├── lib/
+│   ├── main.dart             # App entry point and navigation
+│   ├── models/
+│   │   └── alarm.dart        # Alarm data models
+│   ├── services/
+│   │   ├── api_service.dart      # REST API client
+│   │   ├── socket_service.dart   # SocketIO client
+│   │   └── app_state.dart        # App state management
+│   ├── screens/
+│   │   ├── setup_screen.dart     # Initial server setup
+│   │   ├── home_screen.dart      # Dashboard with stats
+│   │   ├── alarms_screen.dart    # Alarm history list
+│   │   └── settings_screen.dart  # App settings
+│   └── widgets/              # Reusable widgets (future use)
+├── android/                  # Android-specific files
+├── ios/                      # iOS-specific files
+└── pubspec.yaml              # Dependencies
 ```
+
+## Dependencies
+
+- **provider** - State management
+- **http** - REST API calls
+- **socket_io_client** - Real-time WebSocket connection
+- **shared_preferences** - Persistent storage
+- **intl** - Date/time formatting
 
 ## API Integration
 
@@ -103,9 +115,14 @@ The app connects to the server's API endpoints:
 
 ## Screens
 
+### Setup Screen
+- Initial connection setup
+- Server URL validation
+- Connection testing
+
 ### Home Screen
 - Statistics cards (total alarms, sent to app)
-- Alarm source breakdown
+- Alarm source breakdown with color coding
 - 5 most recent alarms with real-time updates
 
 ### Alarms Screen
@@ -119,6 +136,47 @@ The app connects to the server's API endpoints:
 - View app version
 - Disconnect from server
 
+## Building for Production
+
+### Android
+
+1. **Generate release keystore:**
+   ```bash
+   keytool -genkey -v -keystore ~/upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+   ```
+
+2. **Create `android/key.properties`:**
+   ```properties
+   storePassword=<password>
+   keyPassword=<password>
+   keyAlias=upload
+   storeFile=<path-to-keystore>
+   ```
+
+3. **Build APK:**
+   ```bash
+   flutter build apk --release
+   ```
+
+4. **Build App Bundle (for Play Store):**
+   ```bash
+   flutter build appbundle --release
+   ```
+
+### iOS
+
+1. **Open Xcode:**
+   ```bash
+   open ios/Runner.xcworkspace
+   ```
+
+2. **Configure signing** in Xcode (requires Apple Developer account)
+
+3. **Build:**
+   ```bash
+   flutter build ios --release
+   ```
+
 ## Troubleshooting
 
 ### Cannot connect to server
@@ -130,47 +188,57 @@ The app connects to the server's API endpoints:
 
 ### Real-time updates not working
 
-1. Check SocketIO connection in Settings
+1. Check SocketIO connection in app logs
 2. Verify the server is running
 3. Try disconnecting and reconnecting from Settings
 
-### App won't start
+### Build errors
 
 ```bash
-# Clear Expo cache
-expo start -c
+# Clean build
+flutter clean
 
-# Or reinstall dependencies
-rm -rf node_modules
-npm install
+# Get dependencies again
+flutter pub get
+
+# Rebuild
+flutter run
 ```
 
-## Building for Production
-
-### iOS
+### Android build issues
 
 ```bash
-expo build:ios
+# Update Android licenses
+flutter doctor --android-licenses
 ```
 
-You'll need an Apple Developer account ($99/year).
+## Development
 
-### Android
+### Hot Reload
+Press `r` in the terminal while app is running to hot reload changes.
 
+### Hot Restart
+Press `R` in the terminal to hot restart the app.
+
+### Debug Mode
 ```bash
-expo build:android
+flutter run --debug
 ```
 
-You can use a free Google Play Developer account.
+### Release Mode
+```bash
+flutter run --release
+```
 
 ## Future Enhancements
 
-- Push notifications (when app is in background)
+- Push notifications (Firebase Cloud Messaging)
 - Alarm acknowledgment
 - Custom notification sounds
 - Multiple server support
 - Dark mode
 - Alarm filtering and search
+- Offline mode with local storage
 
 ## License
 
