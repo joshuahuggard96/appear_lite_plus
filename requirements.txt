@@ -1,0 +1,9 @@
+Flask==3.0.0
+Flask-SocketIO==5.3.6
+Flask-Login==0.6.3
+pyserial==3.5
+python-socketio==5.11.0
+python-engineio==4.9.0
+bcrypt==4.1.2
+python-dotenv==1.0.0
+simple-websocket==1.1.0

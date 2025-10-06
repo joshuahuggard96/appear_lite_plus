@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Debug Monitor - Appear Lite Plus{% endblock %}
+
+{% block extra_css %}
+<style>
+    .terminal {
+        background-color: #1e1e1e;
+        color: #00ff00;
+        font-family: 'Courier New', monospace;
+        padding: 15px;
+        border-radius: 5px;
+        height: 500px;
+        overflow-y: auto;
+        font-size: 12px;
+        line-height: 1.5;
+        border: 2px solid #333;
+    }
+    .terminal-header {
+        color: #00ffff;
+        font-weight: bold;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #00ff00;
+        padding-bottom: 5px;
+    }
+    .log-serial { color: #ff6b6b; }
+    .log-tap { color: #4ecdc4; }
+    .log-serial-ip { color: #ffe66d; }
+    .log-timestamp { color: #95a5a6; }
+    .log-data { color: #00ff00; }
+    .status-box {
+        background-color: #2d2d2d;
+        border: 1px solid #00ff00;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        font-family: 'Courier New', monospace;
+    }
+    .status-running { color: #00ff00; }
+    .status-stopped { color: #ff6b6b; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Debug Monitor - Terminal View</h2>
+    <button class="btn btn-sm btn-outline-secondary" onclick="location.reload()">
+        <i class="bi bi-arrow-clockwise"></i> Refresh
+    </button>
+</div>
+
+<div class="row">
+    <div class="col-12 mb-3">
+        <div class="status-box">
+            <div style="color: #00ffff; font-weight: bold; margin-bottom: 10px;">SYSTEM STATUS</div>
+            <div class="row">
+                <div class="col-md-4">
+                    Serial Port:
+                    {% if status.serial %}
+                        <span class="status-running">[RUNNING]</span> {{ settings|selectattr('key', 'equalto', 'serial_port')|map(attribute='value')|first }} @ {{ settings|selectattr('key', 'equalto', 'serial_baud_rate')|map(attribute='value')|first }}
+                    {% else %}
+                        <span class="status-stopped">[STOPPED]</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-4">
+                    TAP over IP:
+                    {% if status.tap %}
+                        <span class="status-running">[RUNNING]</span> {{ settings|selectattr('key', 'equalto', 'tap_host')|map(attribute='value')|first }}:{{ settings|selectattr('key', 'equalto', 'tap_port')|map(attribute='value')|first }}
+                    {% else %}
+                        <span class="status-stopped">[STOPPED]</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-4">
+                    Serial/IP:
+                    {% if status.serial_ip %}
+                        <span class="status-running">[RUNNING]</span> {{ settings|selectattr('key', 'equalto', 'serial_ip_host')|map(attribute='value')|first }}:{{ settings|selectattr('key', 'equalto', 'serial_ip_port')|map(attribute='value')|first }}
+                    {% else %}
+                        <span class="status-stopped">[STOPPED]</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Serial Port Terminal -->
+    <div class="col-md-4 mb-4">
+        <div class="terminal" id="terminal-serial">
+            <div class="terminal-header" style="border-color: #ff6b6b;">
+                <span class="log-serial">■</span> SERIAL PORT
+                <div style="color: #95a5a6; font-size: 11px; font-weight: normal;">
+                    {{ settings|selectattr('key', 'equalto', 'serial_port')|map(attribute='value')|first }} @ {{ settings|selectattr('key', 'equalto', 'serial_baud_rate')|map(attribute='value')|first }}
+                </div>
+            </div>
+            {% set serial_alarms = alarms|selectattr('source', 'equalto', 'serial')|list %}
+            {% if serial_alarms %}
+                {% for alarm in serial_alarms|reverse %}
+<span class="log-timestamp">[{{ alarm.received_at }}]</span>
+<span class="log-data">>>> {{ alarm.message }}</span>
+{% if alarm.raw_data and alarm.raw_data != alarm.message %}<span style="color: #666;">RAW: {{ alarm.raw_data }}</span>
+{% endif %}
+                {% endfor %}
+            {% else %}
+<span style="color: #666;">[Waiting for serial data...]</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Serial over IP Terminal -->
+    <div class="col-md-4 mb-4">
+        <div class="terminal" id="terminal-serial-ip">
+            <div class="terminal-header" style="border-color: #ffe66d;">
+                <span class="log-serial-ip">■</span> SERIAL OVER IP
+                <div style="color: #95a5a6; font-size: 11px; font-weight: normal;">
+                    {{ settings|selectattr('key', 'equalto', 'serial_ip_host')|map(attribute='value')|first }}:{{ settings|selectattr('key', 'equalto', 'serial_ip_port')|map(attribute='value')|first }}
+                </div>
+            </div>
+            {% set serial_ip_alarms = alarms|selectattr('source', 'equalto', 'serial_ip')|list %}
+            {% if serial_ip_alarms %}
+                {% for alarm in serial_ip_alarms|reverse %}
+<span class="log-timestamp">[{{ alarm.received_at }}]</span>
+<span class="log-data">>>> {{ alarm.message }}</span>
+{% if alarm.raw_data and alarm.raw_data != alarm.message %}<span style="color: #666;">RAW: {{ alarm.raw_data }}</span>
+{% endif %}
+                {% endfor %}
+            {% else %}
+<span style="color: #666;">[Waiting for TCP connections...]
+
+Test with:
+  telnet localhost {{ settings|selectattr('key', 'equalto', 'serial_ip_port')|map(attribute='value')|first }}
+
+Or Hercules TCP Client</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- TAP over IP Terminal -->
+    <div class="col-md-4 mb-4">
+        <div class="terminal" id="terminal-tap">
+            <div class="terminal-header" style="border-color: #4ecdc4;">
+                <span class="log-tap">■</span> TAP OVER IP
+                <div style="color: #95a5a6; font-size: 11px; font-weight: normal;">
+                    {{ settings|selectattr('key', 'equalto', 'tap_host')|map(attribute='value')|first }}:{{ settings|selectattr('key', 'equalto', 'tap_port')|map(attribute='value')|first }}
+                </div>
+            </div>
+            {% set tap_alarms = alarms|selectattr('source', 'equalto', 'tap')|list %}
+            {% if tap_alarms %}
+                {% for alarm in tap_alarms|reverse %}
+<span class="log-timestamp">[{{ alarm.received_at }}]</span>
+<span class="log-data">>>> {{ alarm.message }}</span>
+{% if alarm.raw_data and alarm.raw_data != alarm.message %}<span style="color: #666;">RAW: {{ alarm.raw_data }}</span>
+{% endif %}
+                {% endfor %}
+            {% else %}
+<span style="color: #666;">[Waiting for TAP messages...]
+
+Test with:
+  python test_alarm.py</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Scroll all terminals to bottom on load
+    window.onload = function() {
+        ['terminal-serial', 'terminal-serial-ip', 'terminal-tap'].forEach(function(id) {
+            var terminal = document.getElementById(id);
+            if (terminal) {
+                terminal.scrollTop = terminal.scrollHeight;
+            }
+        });
+    };
+
+    // Auto-refresh every 5 seconds
+    setTimeout(function() {
+        location.reload();
+    }, 5000);
+</script>
+{% endblock %}

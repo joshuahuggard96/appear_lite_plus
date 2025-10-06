@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Appear Lite Plus{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>System Settings</h2>
+</div>
+
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Handler Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <strong>Serial Port Monitor:</strong><br>
+                        {% if status.serial %}
+                            <span class="badge bg-success">Running</span>
+                        {% else %}
+                            <span class="badge bg-danger">Stopped</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <strong>TAP over IP Server:</strong><br>
+                        {% if status.tap %}
+                            <span class="badge bg-success">Running</span>
+                        {% else %}
+                            <span class="badge bg-danger">Stopped</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <strong>Serial over IP Server:</strong><br>
+                        {% if status.serial_ip %}
+                            <span class="badge bg-success">Running</span>
+                        {% else %}
+                            <span class="badge bg-danger">Stopped</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="POST" action="/settings">
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Serial Port Configuration</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Enable Serial Port Monitor</label>
+                <select class="form-select" name="setting_serial_enabled">
+                    <option value="true" {% if settings|selectattr('key', 'equalto', 'serial_enabled')|map(attribute='value')|first == 'true' %}selected{% endif %}>Enabled</option>
+                    <option value="false" {% if settings|selectattr('key', 'equalto', 'serial_enabled')|map(attribute='value')|first == 'false' %}selected{% endif %}>Disabled</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Serial Port</label>
+                <input type="text" class="form-control" name="setting_serial_port"
+                       value="{{ settings|selectattr('key', 'equalto', 'serial_port')|map(attribute='value')|first }}"
+                       placeholder="/dev/ttyUSB0">
+                <small class="text-muted">Common values: /dev/ttyUSB0, /dev/ttyAMA0, COM3</small>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Baud Rate</label>
+                <select class="form-select" name="setting_serial_baud_rate">
+                    {% set baud = settings|selectattr('key', 'equalto', 'serial_baud_rate')|map(attribute='value')|first %}
+                    <option value="9600" {% if baud == '9600' %}selected{% endif %}>9600</option>
+                    <option value="19200" {% if baud == '19200' %}selected{% endif %}>19200</option>
+                    <option value="38400" {% if baud == '38400' %}selected{% endif %}>38400</option>
+                    <option value="57600" {% if baud == '57600' %}selected{% endif %}>57600</option>
+                    <option value="115200" {% if baud == '115200' %}selected{% endif %}>115200</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">TAP over IP Configuration</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Enable TAP over IP</label>
+                <select class="form-select" name="setting_tap_enabled">
+                    <option value="true" {% if settings|selectattr('key', 'equalto', 'tap_enabled')|map(attribute='value')|first == 'true' %}selected{% endif %}>Enabled</option>
+                    <option value="false" {% if settings|selectattr('key', 'equalto', 'tap_enabled')|map(attribute='value')|first == 'false' %}selected{% endif %}>Disabled</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">TAP Host</label>
+                <input type="text" class="form-control" name="setting_tap_host"
+                       value="{{ settings|selectattr('key', 'equalto', 'tap_host')|map(attribute='value')|first }}"
+                       placeholder="localhost">
+                <small class="text-muted">Use localhost for local only, 0.0.0.0 for all interfaces</small>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">TAP Port</label>
+                <input type="number" class="form-control" name="setting_tap_port"
+                       value="{{ settings|selectattr('key', 'equalto', 'tap_port')|map(attribute='value')|first }}"
+                       placeholder="18001">
+                <small class="text-muted">Standard TAP port is 18001</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Serial over IP Configuration</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Enable Serial over IP</label>
+                <select class="form-select" name="setting_serial_ip_enabled">
+                    <option value="true" {% if settings|selectattr('key', 'equalto', 'serial_ip_enabled')|map(attribute='value')|first == 'true' %}selected{% endif %}>Enabled</option>
+                    <option value="false" {% if settings|selectattr('key', 'equalto', 'serial_ip_enabled')|map(attribute='value')|first == 'false' %}selected{% endif %}>Disabled</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Serial over IP Host</label>
+                <input type="text" class="form-control" name="setting_serial_ip_host"
+                       value="{{ settings|selectattr('key', 'equalto', 'serial_ip_host')|map(attribute='value')|first }}"
+                       placeholder="localhost">
+                <small class="text-muted">Use localhost for local only, 0.0.0.0 for all interfaces</small>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Serial over IP Port</label>
+                <input type="number" class="form-control" name="setting_serial_ip_port"
+                       value="{{ settings|selectattr('key', 'equalto', 'serial_ip_port')|map(attribute='value')|first }}"
+                       placeholder="5001">
+                <small class="text-muted">TCP port for serial data connections</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-grid gap-2">
+        <button type="submit" class="btn btn-primary btn-lg">
+            <i class="bi bi-save"></i> Save Settings & Restart Handlers
+        </button>
+    </div>
+</form>
+
+<div class="alert alert-info mt-4">
+    <i class="bi bi-info-circle"></i>
+    <strong>Note:</strong> Changing settings will restart the alarm handlers. Any active connections will be temporarily interrupted.
+</div>
+
+{% endblock %}
