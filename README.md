@@ -1,6 +1,21 @@
 # Appear Lite Plus
 
-A Raspberry Pi-based alarm messaging system that receives alarms via Serial or TAP over IP and forwards them to a mobile application.
+Complete alarm messaging system for Raspberry Pi with iOS and Android mobile app support.
+
+## Project Structure
+
+This is a monorepo containing both the server and mobile applications:
+
+```
+appear_lite_plus/
+├── server/          # Flask backend server (Python)
+│   ├── src/        # Application source code
+│   ├── data/       # SQLite database
+│   └── README.md   # Server documentation
+│
+└── mobile/         # React Native mobile app (iOS/Android)
+    └── README.md   # Mobile app documentation
+```
 
 ## Features
 
@@ -31,165 +46,83 @@ A Raspberry Pi-based alarm messaging system that receives alarms via Serial or T
 - Network connectivity (for TAP over IP and mobile app communication)
 - Serial port (optional, for serial alarm sources)
 
-## Installation
+## Quick Start
 
-### Quick Setup
+### Server Setup
 
-```bash
-# Clone the repository
-git clone <repository-url>
-cd appear_lite_plus
+1. Navigate to server directory:
+   ```bash
+   cd server
+   ```
 
-# Run setup script
-chmod +x setup.sh
-./setup.sh
+2. Run the setup script (Raspberry Pi/Linux):
+   ```bash
+   chmod +x setup.sh
+   ./setup.sh
+   ```
 
-# Copy and configure environment variables
-cp .env.example .env
-nano .env
+   Or manually (Windows/Mac):
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # Windows: venv\Scripts\activate
+   pip install -r requirements.txt
+   cp .env.example .env
+   ```
 
-# Activate virtual environment
-source venv/bin/activate
+3. Start the server:
+   ```bash
+   python run.py
+   ```
 
-# Run the application
-python run.py
-```
+4. Access the web interface at `http://localhost:5000`
+   **Default login:** admin / admin
 
-### Manual Setup
+### Mobile App Setup
 
-```bash
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate
+1. Navigate to mobile directory:
+   ```bash
+   cd mobile
+   ```
 
-# Install dependencies
-pip install -r requirements.txt
+2. Follow the [mobile README](mobile/README.md) for installation and setup
 
-# Initialize database
-python -c "from src.database.db import Database; db = Database()"
+For detailed setup instructions, see the [server README](server/README.md) or [mobile README](mobile/README.md).
 
-# Create .env file
-cp .env.example .env
-
-# Run the application
-python run.py
-```
-
-## Configuration
-
-Edit the `.env` file to configure the system:
-
-```ini
-# Server Configuration
-FLASK_HOST=0.0.0.0
-FLASK_PORT=5000
-
-# Serial Configuration
-SERIAL_ENABLED=true
-SERIAL_PORT=/dev/ttyUSB0
-SERIAL_BAUD_RATE=9600
-
-# TAP over IP Configuration
-TAP_ENABLED=true
-TAP_PORT=18001
-TAP_HOST=0.0.0.0
-```
-
-## Usage
-
-### Starting the Server
-
-```bash
-python run.py
-```
-
-The web interface will be available at `http://localhost:5000`
-
-Default login credentials:
-- Username: `admin`
-- Password: `admin`
-
-### Web Admin Interface
-
-- **Dashboard**: View system statistics and status
-- **Alarms**: Browse alarm history
-- **Settings**: Configure serial and TAP settings
-
-### Mobile App Integration
-
-The system provides API endpoints for mobile app integration:
-
-- `GET /api/alarms/latest?limit=50` - Get recent alarms
-- `GET /api/stats` - Get alarm statistics
-- `POST /api/alarms/<id>/mark_sent` - Mark alarm as sent
-
-WebSocket endpoint for real-time updates:
-- `ws://localhost:5000/socket.io/?EIO=4&transport=websocket` (namespace: `/app`)
-
-## Project Structure
+## Architecture
 
 ```
-appear_lite_plus/
-├── src/
-│   ├── app.py                 # Main Flask application
-│   ├── database/
-│   │   └── db.py              # Database handler
-│   ├── handlers/
-│   │   ├── serial_handler.py  # Serial port monitoring
-│   │   └── tap_handler.py     # TAP over IP handler
-│   └── templates/
-│       ├── base.html
-│       ├── login.html
-│       ├── dashboard.html
-│       ├── alarms.html
-│       └── settings.html
-├── data/                      # Database files (auto-created)
-├── logs/                      # Log files (auto-created)
-├── run.py                     # Application entry point
-├── requirements.txt           # Python dependencies
-└── .env                       # Configuration (create from .env.example)
+┌─────────────────┐
+│  Alarm Sources  │
+│  - Serial Port  │
+│  - TAP over IP  │
+│  - Serial/IP    │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Flask Server   │
+│  (Raspberry Pi) │
+│  - REST API     │
+│  - SocketIO     │
+│  - SQLite DB    │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   Mobile Apps   │
+│  - iOS          │
+│  - Android      │
+└─────────────────┘
 ```
 
-## Development
+## API Overview
 
-### Adding New Alarm Sources
+The server provides:
+- **REST API** for alarm retrieval and management
+- **SocketIO** for real-time push notifications
+- **Web Admin** for configuration and monitoring
 
-Create a new handler in `src/handlers/`:
-
-```python
-class CustomHandler:
-    def __init__(self, alarm_callback=None):
-        self.alarm_callback = alarm_callback
-
-    def start(self):
-        # Start monitoring
-        pass
-
-    def _process_alarm(self, data):
-        # Save to database and trigger callback
-        alarm_id = db.save_alarm('custom', data)
-        if self.alarm_callback:
-            self.alarm_callback({'id': alarm_id, 'source': 'custom', 'message': data})
-```
-
-Register in `src/app.py`:
-```python
-custom_handler = CustomHandler(alarm_callback)
-custom_handler.start()
-```
-
-## Troubleshooting
-
-### Serial Port Issues
-
-- Check port permissions: `sudo usermod -a -G dialout $USER` (logout/login required)
-- Verify port exists: `ls -l /dev/ttyUSB*` or `ls -l /dev/ttyAMA*`
-- Check port availability: `sudo dmesg | grep tty`
-
-### TAP Connection Issues
-
-- Verify firewall allows port 18001
-- Check if port is already in use: `netstat -tuln | grep 18001`
+See [server README](server/README.md) for full API documentation.
 
 ## License
 
